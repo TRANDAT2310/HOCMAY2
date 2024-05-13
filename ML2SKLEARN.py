@@ -1,76 +1,44 @@
 import numpy as np
 import pandas as pd
+from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 
-
 doc = pd.read_csv(r'D:/dữ liệu học máy, R/mall_chuan_hoa.csv')
-# kiểm tra giá trị lỗi
-doc.isnull().sum()
+print(doc)
 
 
-X = doc[['Thu nhập_Normalized','Chi tiêu_Normalized' ]].values
+# Lấy cột 'Annual Income (k$)' và 'Spending Score (1-100)'
+X = doc[['Thu nhập_Normalized', 'Chi tiêu_Normalized']]
 
-#số lượng cụm
+# Số lượng cụm
 k = 3
 
-#khởi tạo ngẫu nhiên tâm ban đầu
-centers = X[np.random.choice(X.shape[0],k , replace=False)]
+# Sử dụng KMeans từ thư viện sklearn
+kmeans = KMeans(n_clusters=k, random_state=42)
+kmeans.fit(X)
 
-#tính euclide giữa điểm dữ liệu và center
-def  khoangcach_euclide(X,centers):
-    khoangcach=[]
-    for center in centers:
-        khoangcach.append(np.linalg.norm(X - center, axis=1))
-    return np.array(khoangcach)
+# Nhãn của các cụm
+labels = kmeans.labels_
 
-#gán nhãn cho điểm dữ liệu dựa trên center gần nhất
-def gan_nhan(khoangcach):
-    return np.argmin(khoangcach, axis=0)
+# Vị trí của các centroids
+centers = kmeans.cluster_centers_
 
-#update vị trí các center
-def update_centers(X, labels, k):
-    centers = []
-    for i in range(k):
-        centers.append(np.mean(X[labels == i], axis=0))
-    return np.array(centers)
+#tính sai số cho mô hình
+sed = 0
+for i in range(len(X)):
+    cluster_center = centers[labels[i]]
+    sed += np.linalg.norm(X.iloc[i] - cluster_center)**2
 
-#hàm kiểm tra điều kiện dừng của thuật toán
-def dieu_kien_dung(old_centers, centers, tol=1e-4):
-    return np.linalg.norm(centers - old_centers) < tol
+print("Tổng Squared Euclidean Distance:", sed)
 
-#chạy thuât toán
-def k_means(X,k):
-    centers = X[np.random.choice(X.shape[0], k , replace=False)]
-    while True:
-        old_centers =centers
-        khoangcach = khoangcach_euclide(X, centers)
-        labels = gan_nhan(khoangcach)
-        centers = update_centers(X, labels, k)
-        if dieu_kien_dung(old_centers, centers):
-            break
-        return labels, centers
-#chạy 
-labels, centers = k_means(X,k)
 
-#tính toán mức độ tập trung của dữ liệu
-def tinh_sed(X, centers, labels):
-    sed = 0
-    for i in range(len(X)):
-        cluster_center = centers[labels[i]]
-        sed += np.linalg.norm(X[i] - cluster_center)**2
-    return sed
-
-# Tính SED
-sed = tinh_sed(X, centers, labels)
-print("Squared Euclidean Distance:", sed)
-
-#vẽ biểu đồ
-colors = ['r','g','b']
+# Vẽ biểu đồ phân cụm
+colors = ['r', 'g', 'b']
 for i in range(k):
-    plt.scatter(X[labels == i][:, 0], X[labels == i][:, 1], c=colors[i], label=f'Cluster {i+1}')
-plt.scatter(centers[:,0], centers[:,1], marker='.', s=300, c= 'black', label = 'centers')
-plt.xlabel('thu nhap')
-plt.ylabel('chi tieu')
-plt.title('phan cum khach hang')
+    plt.scatter(X.iloc[labels == i, 0], X.iloc[labels == i, 1], c=colors[i], label=f'Cluster {i+1}')
+plt.scatter(centers[:, 0], centers[:, 1], marker='.', s=300, c='black', label='centers')
+plt.xlabel('Mức thu nhập)')
+plt.ylabel('Mức chi tiêu')
+plt.title('Phân cụm khách hàng')
 plt.legend()
 plt.show()
