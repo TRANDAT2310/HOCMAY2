@@ -49,20 +49,20 @@ def k_means(X,k):
         if dieu_kien_dung(old_centers, centers):
             break
         return labels, centers
+    
+def tinh_MSE(X,lables, centers):
+    MSE = 0
+    for i in range(k):
+        cluster_point = X[labels == i]
+        MSE += np.sum((cluster_point - centers[i]) **2)
+    MSE /= X.shape[0]
+    return MSE
 #chạy 
 labels, centers = k_means(X,k)
 
-#tính toán mức độ tập trung của dữ liệu
-def tinh_sed(X, centers, labels):
-    sed = 0
-    for i in range(len(X)):
-        cluster_center = centers[labels[i]]
-        sed += np.linalg.norm(X[i] - cluster_center)**2
-    return sed
-
-# Tính SED
-sed = tinh_sed(X, centers, labels)
-print("Squared Euclidean Distance:", sed)
+#tinh MSE
+MSE = tinh_MSE(X, labels, centers)
+print(f"Mean square error : {MSE}")
 
 #vẽ biểu đồ
 colors = ['r','g','b']
